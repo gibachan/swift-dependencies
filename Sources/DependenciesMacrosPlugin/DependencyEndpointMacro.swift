@@ -143,7 +143,10 @@ public enum DependencyEndpointMacro: AccessorMacro, PeerMacro {
     if functionType.effectSpecifiers?.asyncSpecifier != nil {
       effectSpecifiers.append("await ")
     }
-    let access = property.modifiers.first { $0.name.tokenKind == .keyword(.public) }
+    let access = property.modifiers.first {
+      $0.name.tokenKind == .keyword(.public) ||
+      $0.name.tokenKind == .keyword(.package)
+    }
 
     var decls: [DeclSyntax] = []
 

@@ -381,7 +381,7 @@ final class DependencyEndpointMacroTests: BaseTestCase {
     }
   }
 
-  func testLabeledArguments() {
+  func testPublicLabeledArguments() {
     assertMacro {
       """
       public struct Client {
@@ -407,6 +407,43 @@ final class DependencyEndpointMacroTests: BaseTestCase {
 
         @Sendable
           public func endpoint(_ p0: String, id p1: Int, progress p2: Float) async -> Void {
+          await self.endpoint(p0, p1, p2)
+        }
+
+        private var _endpoint: @Sendable (String, _ id: Int, _ progress: Float) async -> Void = { _, _, _ in
+          IssueReporting.reportIssue("Unimplemented: '\(Self.self).endpoint'")
+        }
+      }
+      """#
+    }
+  }
+
+  func testPackageLabeledArguments() {
+    assertMacro {
+      """
+      package struct Client {
+        @DependencyEndpoint
+        package var endpoint: @Sendable (String, _ id: Int, _ progress: Float) async -> Void
+      }
+      """
+    } expansion: {
+      #"""
+      package struct Client {
+        package var endpoint: @Sendable (String, _ id: Int, _ progress: Float) async -> Void {
+          @storageRestrictions(initializes: _endpoint)
+          init(initialValue) {
+            _endpoint = initialValue
+          }
+          get {
+            _endpoint
+          }
+          set {
+            _endpoint = newValue
+          }
+        }
+
+        @Sendable
+          package func endpoint(_ p0: String, id p1: Int, progress p2: Float) async -> Void {
           await self.endpoint(p0, p1, p2)
         }
 
